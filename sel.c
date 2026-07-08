@@ -8,34 +8,46 @@
 #include <string.h>
 #include <stdlib.h>
 
-int main(void)
+struct Opts {
+	char **items;
+	size_t len;
+	size_t cap;
+};
+
+#define OPTS_CAP 16
+
+int
+main(void)
 {
 	FILE *in = fopen("/dev/tty", "r");
 	FILE *out = fopen("/dev/tty", "w");
 	if (!in || !out) return 1;
 
-	size_t ocap = 16;
-	size_t olen = 0;
-	char **opts = malloc(ocap * sizeof(char*));
+	struct Opts opts = {
+		.items = malloc(OPTS_CAP * sizeof(char *)),
+		.len = 0,
+		.cap = OPTS_CAP,
+	};
 
-	char *buf = NULL;
-	size_t size;
-	ssize_t len;
-	while ((len = getline(&buf, &size, stdin)) > 0) {
-		if (olen == ocap) {
-			ocap <<= 1;
-			opts = realloc(opts, ocap * sizeof(char*));
+	char *lbuf = NULL;
+	size_t lsize;
+	ssize_t llen;
+	while ((llen = getline(&lbuf, &lsize, stdin)) > 0) {
+		if (opts.len == opts.cap) {
+			opts.cap <<= 1;
+			opts.items = realloc(opts.items,
+			                     opts.cap * sizeof(char *));
 		}
-		opts[olen] = malloc(len);
-		memcpy(opts[olen], buf, len-1);
-		opts[olen][len] = '\0';
-		++olen;
-		fprintf(out, "%s", buf);
+		opts.items[opts.len] = malloc(llen);
+		memcpy(opts.items[opts.len], lbuf, llen-1);
+		opts.items[opts.len][llen] = '\0';
+		++opts.len;
+		fprintf(out, "%s", lbuf);
 	}
 
 	size_t sel;
-	if (fscanf(in, "%d", &sel) && 1 <= sel && sel <= olen) {
-		printf("%s\n", opts[sel-1]);
+	if (fscanf(in, "%d", &sel) && 1 <= sel && sel <= opts.len) {
+		printf("%s\n", opts.items[sel-1]);
 	}
 
 	fclose(in);
