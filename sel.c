@@ -8,28 +8,33 @@
 #include <string.h>
 #include <stdlib.h>
 
-char *opts[1024];
-
 int main(void)
 {
 	FILE *in = fopen("/dev/tty", "r");
 	FILE *out = fopen("/dev/tty", "w");
 	if (!in || !out) return 1;
 
+	size_t ocap = 16;
+	size_t olen = 0;
+	char **opts = malloc(ocap * sizeof(char*));
+
 	char *buf = NULL;
 	size_t size;
 	ssize_t len;
-	int oi = 0;
 	while ((len = getline(&buf, &size, stdin)) > 0) {
-		opts[oi] = malloc(len);
-		memcpy(opts[oi], buf, len-1);
-		opts[oi][len] = '\0';
-		++oi;
+		if (olen == ocap) {
+			ocap <<= 1;
+			opts = realloc(opts, ocap * sizeof(char*));
+		}
+		opts[olen] = malloc(len);
+		memcpy(opts[olen], buf, len-1);
+		opts[olen][len] = '\0';
+		++olen;
 		fprintf(out, "%s", buf);
 	}
 
 	int sel;
-	if (fscanf(in, "%d", &sel) && 1 <= sel && sel <= oi) {
+	if (fscanf(in, "%d", &sel) && 1 <= sel && sel <= olen) {
 		printf("%s\n", opts[sel-1]);
 	}
 
