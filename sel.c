@@ -33,7 +33,7 @@ int main(void)
 		fprintf(out, "%s", buf);
 	}
 
-	int sel;
+	size_t sel;
 	if (fscanf(in, "%d", &sel) && 1 <= sel && sel <= olen) {
 		printf("%s\n", opts[sel-1]);
 	}
