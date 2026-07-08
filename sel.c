@@ -5,8 +5,10 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-char opts[4096][1024];
+char *opts[1024];
 
 int main(void)
 {
@@ -14,17 +16,16 @@ int main(void)
 	FILE *out = fopen("/dev/tty", "w");
 	if (!in || !out) return 1;
 
-	int c, oi, ci;
-	oi = ci = 0;
-	while ((c = getchar()) != EOF) {
-		if (c == '\n') {
-			opts[oi][ci] = '\0';
-			++oi;
-			ci = 0;
-		} else {
-			opts[oi][ci++] = c;
-		}
-		fputc(c, out);
+	char *buf = NULL;
+	size_t size;
+	ssize_t len;
+	int oi = 0;
+	while ((len = getline(&buf, &size, stdin)) > 0) {
+		opts[oi] = malloc(len);
+		memcpy(opts[oi], buf, len-1);
+		opts[oi][len] = '\0';
+		++oi;
+		fprintf(out, "%s", buf);
 	}
 
 	int sel;
